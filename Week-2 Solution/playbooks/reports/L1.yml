@@ -1,0 +1,132 @@
+ansible_facts:
+    napalm_arp_table:
+    -   age: 1.0
+        interface: Ethernet0/0
+        ip: 192.168.1.65
+        mac: 56:B8:0A:71:D1:2A
+    -   age: 45.0
+        interface: Ethernet0/0
+        ip: 192.168.1.70
+        mac: A4:DB:30:B3:FA:16
+    -   age: 0.0
+        interface: Ethernet0/0
+        ip: 192.168.1.72
+        mac: AA:BB:CC:00:10:00
+    -   age: 20.0
+        interface: Ethernet0/0
+        ip: 192.168.1.254
+        mac: A8:39:44:B4:91:F8
+    -   age: 0.0
+        interface: Ethernet0/1
+        ip: 192.168.100.102
+        mac: AA:BB:CC:00:10:10
+    -   age: 2.0
+        interface: Ethernet0/1
+        ip: 192.168.100.201
+        mac: AA:BB:CC:00:20:10
+    -   age: 2.0
+        interface: Ethernet0/2
+        ip: 192.168.200.31
+        mac: AA:BB:CC:00:30:10
+    -   age: 0.0
+        interface: Ethernet0/2
+        ip: 192.168.200.103
+        mac: AA:BB:CC:00:10:20
+    napalm_bgp_neighbors:
+        global:
+            peers:
+                192.168.100.201:
+                    address_family:
+                        ipv4:
+                            accepted_prefixes: 1
+                            received_prefixes: 1
+                            sent_prefixes: 3
+                    description: R2
+                    is_enabled: true
+                    is_up: true
+                    local_as: 65101
+                    remote_as: 65102
+                    remote_id: 172.16.16.2
+                    uptime: 2646
+                192.168.200.31:
+                    address_family:
+                        ipv4:
+                            accepted_prefixes: 1
+                            received_prefixes: 1
+                            sent_prefixes: 3
+                    description: R3
+                    is_enabled: true
+                    is_up: true
+                    local_as: 65101
+                    remote_as: 65103
+                    remote_id: 172.16.16.3
+                    uptime: 2649
+            router_id: 172.16.16.1
+    napalm_facts:
+        fqdn: L1.telus
+        hostname: L1
+        interface_list:
+        - Ethernet0/0
+        - Ethernet0/1
+        - Ethernet0/2
+        - Ethernet0/3
+        - Loopback0
+        model: Unknown
+        os_version: Linux Software (I86BI_LINUX-ADVENTERPRISEK9-M), Version 15.4(1)T,
+            DEVELOPMENT TEST SOFTWARE
+        serial_number: '67108880'
+        uptime: 2760
+        vendor: Cisco
+    napalm_fqdn: L1.telus
+    napalm_hostname: L1
+    napalm_interface_list:
+    - Ethernet0/0
+    - Ethernet0/1
+    - Ethernet0/2
+    - Ethernet0/3
+    - Loopback0
+    napalm_interfaces:
+        Ethernet0/0:
+            description: ''
+            is_enabled: true
+            is_up: true
+            last_flapped: -1.0
+            mac_address: AA:BB:CC:00:10:00
+            speed: 10
+        Ethernet0/1:
+            description: Link1;
+            is_enabled: true
+            is_up: true
+            last_flapped: -1.0
+            mac_address: AA:BB:CC:00:10:10
+            speed: 10
+        Ethernet0/2:
+            description: Link2;
+            is_enabled: true
+            is_up: true
+            last_flapped: -1.0
+            mac_address: AA:BB:CC:00:10:20
+            speed: 10
+        Ethernet0/3:
+            description: ''
+            is_enabled: false
+            is_up: false
+            last_flapped: -1.0
+            mac_address: AA:BB:CC:00:10:30
+            speed: 10
+        Loopback0:
+            description: Loopback interface;
+            is_enabled: true
+            is_up: true
+            last_flapped: -1.0
+            mac_address: ''
+            speed: 8000
+    napalm_mac_address_table: []
+    napalm_model: Unknown
+    napalm_os_version: Linux Software (I86BI_LINUX-ADVENTERPRISEK9-M), Version 15.4(1)T,
+        DEVELOPMENT TEST SOFTWARE
+    napalm_serial_number: '67108880'
+    napalm_uptime: 2760
+    napalm_vendor: Cisco
+changed: false
+failed: false

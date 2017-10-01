@@ -1,0 +1,19 @@
+---
+interfaces:
+  - name: "Loopback0"
+    description: "Loopback interface"
+    ips:
+      - "172.16.16.3/32"
+    enabled: true
+
+  - name: "E0/1"
+    description: "Link1"
+    ips:
+      - "192.168.200.31/24"
+    enabled: true
+
+as: "65103"
+neighbors:
+  - name: L1
+    ip: "192.168.200.103"
+    asn : "65101"

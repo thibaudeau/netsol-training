@@ -1,0 +1,17 @@
+
+---
+- name: "Simple configuration"
+  hosts: lab1
+  connection: local
+  gather_facts: no
+  vars:
+    conf_dir: "{{ playbook_dir }}/.compiled"
+    creds:
+      host: "{{ ansible_host }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_ssh_pass }}"
+
+  tasks:
+    - ios_config:
+        src: "{{conf_dir}}/{{ inventory_hostname}}/assembled.conf"
+        provider: "{{ creds }}"

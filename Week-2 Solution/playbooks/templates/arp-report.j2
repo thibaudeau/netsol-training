@@ -1,0 +1,4 @@
+age,interface,ip address,mac address
+{% for arp in result.ansible_facts.napalm_arp_table|sort(attribute="mac") %}
+{{arp.age}},{{arp.interface}},{{arp.ip}},{{arp.mac}}
+{% endfor %}

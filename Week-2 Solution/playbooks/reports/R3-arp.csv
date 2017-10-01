@@ -1,0 +1,7 @@
+age,interface,ip address,mac address
+1.0,Ethernet0/0,192.168.1.65,56:B8:0A:71:D1:2A
+44.0,Ethernet0/0,192.168.1.70,A4:DB:30:B3:FA:16
+20.0,Ethernet0/0,192.168.1.254,A8:39:44:B4:91:F8
+44.0,Ethernet0/1,192.168.200.103,AA:BB:CC:00:10:20
+0.0,Ethernet0/0,192.168.1.73,AA:BB:CC:00:30:00
+0.0,Ethernet0/1,192.168.200.31,AA:BB:CC:00:30:10

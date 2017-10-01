@@ -1,0 +1,13 @@
+
+router bgp {{ as }}
+{% for neigh in neighbors %}
+ neighbor {{ neigh.ip }} remote-as {{ neigh.asn }}
+ neighbor {{ neigh.ip }} description {{ neigh.name }}
+{% endfor %}
+{% for i in interfaces %}
+{% for ip in i.ips %}
+  network {{ ip|ipaddr("address") }} mask {{ ip|ipaddr("netmask") }}
+{% endfor %}
+!
+{% endfor %}
+end

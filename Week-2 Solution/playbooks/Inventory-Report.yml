@@ -1,0 +1,51 @@
+- name: "Get information"
+  hosts: lab1
+  gather_facts: no
+  connection: local
+  tasks:
+    - napalm_get_facts:
+         hostname: "{{ ansible_host }}"
+         username: "{{ ansible_user }}"
+         dev_os: "{{ os }}"
+         password: "{{ ansible_ssh_pass }}"
+         filter: 'facts,interfaces,bgp_neighbors,arp_table,mac_address_table'
+      register: result
+
+  post_tasks:
+    - set_fact:
+        conf_dir: "{{ playbook_dir }}/reports"
+
+    - name: "Make sure there are no remains from a previous run"
+      file:
+        path: "{{ conf_dir }}"
+        state: absent
+      changed_when: no   # Don't report changes
+      check_mode: no     # Always make changes
+
+    - name: "Create folder to store configurations and diffs for/from the devices"
+      file:
+        path: "{{ conf_dir }}"
+        state: directory
+      changed_when: no   # Don't report changes
+      check_mode: no     # Always make changes
+
+    - name: saving json
+      vars:
+        destination_file: "{{ conf_dir }}/{{ inventory_hostname }}.json"
+      copy:
+        content: "{{ result|to_nice_json }}"
+        dest: "{{ destination_file }}"
+
+    - name: saving yaml
+      vars:
+        destination_file: "{{ conf_dir }}/{{ inventory_hostname }}.yml"
+      copy:
+        content: "{{ result|to_nice_yaml }}"
+        dest: "{{ destination_file }}"
+
+    - name: "make a CSV of the arp table"
+      template:
+        src: "arp-report.j2"
+        dest: "{{ conf_dir }}/{{ inventory_hostname }}-arp.csv"
+      changed_when: no
+      check_mode: no
