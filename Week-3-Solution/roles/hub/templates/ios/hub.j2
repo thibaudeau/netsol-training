@@ -1,0 +1,25 @@
+{% set network_base = "192.168.1"~id~".0/24" %}
+{% set network = network_base|ipaddr %}
+{% set loop_base = "172.16.16."~id~"/32" %}
+{% set loop1 = loop_base|ipaddr %}
+
+
+router ospf 1
+  router-id {{ loop1|ipaddr('address') }}
+  log-adjacency-changes
+
+{% for subnets in server_subnets %}
+interface lo1{{loop.index}}
+ description Server Subnet
+ ip address {{ subnets|ipaddr(1)|ipaddr('address') }} {{ subnets|ipaddr('netmask') }}
+ ip ospf 1 area 1
+{%endfor%}
+
+interface loop1
+ ip ospf 1 area 1
+
+{% set base_asn = "65100" %}
+{% set asn = base_asn|int + id|int %}
+router bgp {{asn}}
+ address-family ipv4
+  redistribute ospf 1

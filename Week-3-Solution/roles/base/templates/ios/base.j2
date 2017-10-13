@@ -1,0 +1,25 @@
+ntp server {{ntp}}
+snmp server community {{snmp_community_ro}} ro 99
+snmp-server community {{snmp_community_rw}} rw 99
+snmp-server contact MEEEEE
+snmp-server location MY-HOUSE
+snmp-server chassis-id {{inventory_hostname}}
+ip domain name {{domain}}
+
+{% for subnet in mgmt_acl %}
+{% set net = subnet|ipaddr(0) %}
+access-list 99 permit {{net|ipaddr('network')}} {{net|ipaddr('hostmask')}}
+{% endfor %}
+
+{% set network_base = "172.16.16."~id~"/32" %}
+{% set network = network_base|ipaddr %}
+interface lo1
+ ip address {{network|ipaddr('address')}} {{network|ipaddr('netmask')}}
+
+line con 0
+ password {{ansible_ssh_pass}}
+line aux 0
+line vty 0 4
+ exec-timeout 720 0
+ login local
+transport input telnet ssh

@@ -1,0 +1,59 @@
+---
+- name: Simple configuration
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+      conf_dir: "{{ playbook_dir }}/compiled/"
+
+  pre_tasks:
+     - name: Set some global facts
+       set_fact:
+          host_dir: "{{ conf_dir}}/{{ inventory_hostname}}"
+       changed_when: False
+     - name: Make sure there are no remains from a previous run
+       file:
+         path: "{{ host_dir }}"
+         state: absent
+       changed_when: False
+       always_run: true
+     - name: Create folder to store configurations and diffs for/from the devices
+       file:
+         path: "{{ host_dir }}"
+         state: directory
+       changed_when: False
+       always_run: true
+     - name: Get my node ID
+       set_fact:
+         id: "{{ inventory_hostname.split('-')[1] }}"
+     - name: Load fabric info
+       include_vars: "fabric.yml"
+
+
+- name: Branch Configuration
+  hosts: branch
+  connection: local
+  roles:
+    - base
+    - branch
+
+- name: Branch Configuration
+  hosts: hub
+  connection: local
+  roles:
+    - base
+    - hub
+
+- name: Fabric Configuration
+  hosts: all
+  connection: local
+  roles:
+    - fabric
+
+  post_tasks:
+    - name: Assemble all the configuration bits
+      assemble:
+          src: "{{ host_dir }}/"
+          dest: "{{ host_dir }}/assembled.conf"
+      changed_when: False
+      always_run: true

@@ -1,0 +1,7 @@
+---
+- name: Hub Local Configuration
+  template:
+    src: "{{ os }}/hub.j2"
+    dest: "{{ host_dir }}/hub.conf"
+  changed_when: no
+  check_mode: no

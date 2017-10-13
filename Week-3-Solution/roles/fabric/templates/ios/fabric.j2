@@ -1,0 +1,25 @@
+{% macro conf_link(name, index, is_left, peer) -%}
+{% set network = "{}{}/24".format(fabric_link_prefix, index) %}
+{% set ip = network|ipaddr(1) if is_left else network|ipaddr(2) %}
+{% set peer_ip = network|ipaddr(2) if is_left else network|ipaddr(1) %}
+{% set asn = base_asn|int + id|int %}
+{% set peer_asn = base_asn|int + hostvars[peer]['id']|int %}
+
+interface {{ name }}
+ no switchport
+ ip address {{ ip }} 255.255.255.0
+!
+router bgp {{ asn }}
+  neighbor {{ peer_ip }} remote-as {{ peer_asn }}
+address-family ipv4
+  neighbor {{ peer_ip }} activate
+{%- endmacro %}
+
+{% for link in fabric %}
+{% set right_port = 'eth0/1' if hostvars[link.left]['id'] == "1" else 'eth0/2' %}
+{% if inventory_hostname == link.left %}
+{{ conf_link(link.left_port, link.link_id, true, link.right) }}
+{% elif inventory_hostname == link.right %}
+{{ conf_link(right_port, link.link_id, false, link.left) }}
+{% endif %}
+{% endfor %}
