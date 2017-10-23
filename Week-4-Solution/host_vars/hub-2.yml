@@ -1,0 +1,7 @@
+---
+  hostname: hub-2
+  os: ios
+  server_subnets:
+    - 10.3.3.0/24
+    - 10.4.4.0/24
+    - 10.5.6.0/24

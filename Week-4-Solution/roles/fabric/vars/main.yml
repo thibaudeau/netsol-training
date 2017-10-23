@@ -1,0 +1,15 @@
+fabric:
+- {left: hub-1, left_port: eth0/1,
+right: branch-11, link_id: 11}
+- {left: hub-1, left_port: eth0/2,
+right: branch-12, link_id: 12}
+- {left: hub-1, left_port: eth0/3,
+right: branch-13, link_id: 13}
+- {left: hub-2, left_port: eth0/1,
+right: branch-11, link_id: 21}
+- {left: hub-2, left_port: eth0/2,
+right: branch-12, link_id: 22}
+- {left: hub-2, left_port: eth0/3,
+right: branch-13, link_id: 23}
+fabric_link_prefix: '169.254.'
+base_asn: '65100'

@@ -1,0 +1,16 @@
+---
+- name: Wait for BGP peers to establish and Routing tables to populate
+  pause: seconds=15 prompt="Wait for BGP peers to establish and Routing tables to populate"
+  when: wait_flag is defined
+
+- name: Collect BGP neighbors
+  ios_command:
+    commands:
+    - "show bgp neighbor | include ^[1-9]"
+  register: bgp_neighbors
+
+- name: Verify BGP peers
+  assert:
+    that: "'{{ item.key }}' in bgp_neighbors.stdout[0]"
+    msg:  "BGP session on interface {{item.key}} is missing"
+with_dict: "{{ nodes[inventory_hostname].links }}"

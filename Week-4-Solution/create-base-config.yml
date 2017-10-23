@@ -1,0 +1,85 @@
+---
+- name: Simple configuration
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+      conf_dir: "{{ playbook_dir }}/compiled/"
+      creds:
+        host: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_ssh_pass }}"
+
+  pre_tasks:
+     - name: Set some global facts
+       set_fact:
+          host_dir: "{{ conf_dir}}{{ inventory_hostname}}"
+       changed_when: False
+
+     - name: Make sure there are no remains from a previous run
+       file:
+         path: "{{ host_dir }}"
+         state: absent
+       changed_when: False
+
+     - name: Create folder to store configurations and diffs for/from the devices
+       file:
+         path: "{{ host_dir }}"
+         state: directory
+       changed_when: False
+
+     - name: Get my node ID
+       set_fact:
+         id: "{{ inventory_hostname.split('-')[1] }}"
+
+- name: Branch Configuration
+  hosts: branch
+  connection: local
+  vars:
+      creds:
+        host: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_ssh_pass }}"
+  roles:
+    - base
+    - branch
+
+
+  post_tasks:
+  - name: Assemble all the configuration bits
+    assemble:
+        src: "{{ host_dir }}/"
+        dest: "{{ host_dir }}/assembled.conf"
+    changed_when: False
+
+  - name: Load config_file
+    ios_config:
+      src: "{{ host_dir }}/assembled.conf"
+      provider: "{{creds}}"
+
+  - import_tasks: includes/validate.yml
+    when: not ansible_check_mode
+
+- name: Hub Configuration
+  hosts: hub
+  connection: local
+  vars:
+      creds:
+        host: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_ssh_pass }}"
+  roles:
+    - base
+    - hub
+
+  post_tasks:
+  - name: Assemble all the configuration bits
+    assemble:
+        src: "{{ host_dir }}/"
+        dest: "{{ host_dir }}/assembled.conf"
+    changed_when: False
+
+  - name: Load config_file
+    ios_config:
+      src: "{{ host_dir }}/assembled.conf"
+      provider: "{{creds}}"

@@ -1,0 +1,7 @@
+---
+- name: Fabric Configuration
+  template:
+    src: "{{ os }}/fabric.j2"
+    dest: "{{ host_dir }}/fabric.conf"
+  changed_when: no
+  check_mode: no

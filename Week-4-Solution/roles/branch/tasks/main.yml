@@ -1,0 +1,7 @@
+---
+- name: Branch Local Configuration
+  template:
+    src: "{{ os }}/branch.j2"
+    dest: "{{ host_dir }}/branch.conf"
+  changed_when: no
+  check_mode: no

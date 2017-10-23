@@ -1,0 +1,45 @@
+---
+- name: Fabric Configuration
+  hosts: all
+  connection: local
+  gather_facts: no
+  vars:
+      conf_dir: "{{ playbook_dir }}/compiled/"
+
+  pre_tasks:
+     - name: Set some global facts
+       set_fact:
+          host_dir: "{{ conf_dir}}/{{ inventory_hostname}}"
+       changed_when: False
+     - name: Make sure there are no remains from a previous run
+       file:
+         path: "{{ host_dir }}/fabric.conf"
+         state: absent
+       changed_when: False
+
+     - name: Create folder to store configurations and diffs for/from the devices
+       file:
+         path: "{{ host_dir }}"
+         state: directory
+       changed_when: False
+
+     - name: Get my node ID
+       set_fact:
+         id: "{{ inventory_hostname.split('-')[1] }}"
+
+- name: Fabric Configuration
+  hosts: all
+  connection: local
+  vars:
+      creds:
+        host: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_ssh_pass }}"
+  roles:
+    - fabric
+
+  post_tasks:
+  - name: Load config_file
+    ios_config:
+      src: "{{ host_dir }}/fabric.conf"
+      provider: "{{creds}}"
