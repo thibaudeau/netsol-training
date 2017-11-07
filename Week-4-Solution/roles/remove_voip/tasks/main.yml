@@ -1,0 +1,7 @@
+---
+- name: VoIP Configuration
+  template:
+    src: "{{ os }}/voip.j2"
+    dest: "{{ host_dir }}/remove_voip.conf"
+  changed_when: no
+  check_mode: no

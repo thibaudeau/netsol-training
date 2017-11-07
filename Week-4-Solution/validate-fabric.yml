@@ -6,37 +6,22 @@
   tasks:
   - name: Create folder to validation model
     file:
-      path: "{{ validations }}"
+      path: "{{ validations_dir }}"
       state: directory
     changed_when: False
 
+  - name: Get my node ID
+    set_fact:
+      id: "{{ inventory_hostname.split('-')[1] }}"
+
   - include_vars: "roles/fabric/vars/main.yml"
-    run_once: true
 
   - name: Create per-node data model from fabric data model
     template: src=fabric-to-nodes.j2 dest={{validations_dir}}/{{inventory_hostname}}_node.yml
-    run_once: true
-
-  - include_vars: "{{validations_dir}}/{{inventory_hostname}}_node.yml"
 
 
 - hosts: all
   name: Validate Fabric
   tasks:
+  - include_vars: "validations/{{inventory_hostname}}_node.yml"
   - include_tasks: "includes/validate.yml"
-  - name: Set 'wait for BGP flag'
-    set_fact: wait_flag=1
-
-- hosts: all
-  name: Validate fabric connectivity using LLDP neighbors
-  tags: [ validate ]
-  tasks:
-  - name: Wait for LLDP to start
-    include_tasks: lldp/wait.yml
-  - name: Gather LLDP facts
-    include_tasks: "{{item}}"
-    with_first_found:
-      - "{{ansible_os}}/lldp_facts.yml"
-      - "lldp/napalm_lldp_facts.yml"
-  - name: Validate fabric connectivity using LLDP neighbors
-include_tasks: lldp/validate.yml

@@ -1,7 +1,6 @@
 {% set network_base = "192.168.1"~id~".0/24" %}
 {% set lan = network_base|ipsubnet(25,0) %}
 {% set base_lan = network_base|ipsubnet(25,1) %}
-{% set voice_lan = base_lan|ipsubnet(26,0) %}
 {% set atm_lan = base_lan|ipsubnet(26,1) %}
 {% set loop_base = "172.16.16."~id~"/32" %}
 {% set loop1 = loop_base|ipaddr %}
@@ -16,11 +15,6 @@ interface lo1{{id}}
  ip address {{ lan|ipaddr(1)|ipaddr('address') }} {{ lan|ipaddr('netmask') }}
  ip ospf 1 area 1
 
-{% set voice_id = id|int + "1"|int %}
-interface lo1{{voice_id}}
- description Voice LAN
- ip address {{ voice_lan|ipaddr(1)|ipaddr('address') }} {{ voice_lan|ipaddr('netmask') }}
- ip ospf 1 area 1
 
 {% set atm_id = id|int + "2"|int %}
 interface lo1{{atm_id}}

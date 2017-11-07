@@ -1,0 +1,25 @@
+###
+#  Model transformation to validate fabric
+###
+---
+
+nodes:
+  hub-1:
+    router_id: "172.16.16.1/32"
+    asn: "65101"
+    neighbors:
+
+
+      "169.254.11.2":
+        remote_as: "65111"
+        interface: "eth0/1"
+
+
+      "169.254.12.2":
+        remote_as: "65112"
+        interface: "eth0/2"
+
+
+      "169.254.13.2":
+        remote_as: "65113"
+        interface: "eth0/3"

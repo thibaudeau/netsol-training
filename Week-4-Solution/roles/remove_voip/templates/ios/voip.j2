@@ -1,0 +1,20 @@
+{% macro conf_branch() -%}
+{% set voip_acl = "48" %}
+no ip access-list standard {{voip_acl}}
+{% set voice_id = id|int + "1"|int %}
+no interface eth0/3.{{voice_id}}
+{%- endmacro %}
+
+{% macro conf_hub()  -%}
+{% for srv_desc, subnet in voip_srv_subnets.iteritems() %}
+{% set voip_acl = 149 + loop.index %}
+no ip access-list standard {{voip_acl}}
+no interface eth1/0.{{loop.index * 10 }}
+{%endfor%}
+{%- endmacro %}
+
+{% if node_type == 'hub' %}
+{{ conf_hub() }}
+{% elif node_type == 'branch' %}
+{{ conf_branch() }}
+{% endif %}

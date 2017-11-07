@@ -1,25 +1,26 @@
+###
+#  Model transformation to validate fabric
+###
 {% macro conf_link(name, index, is_left, peer) -%}
 {% set network = "{}{}/24".format(fabric_link_prefix, index) %}
-{% set ip = network|ipaddr(1) if is_left else network|ipaddr(2) %}
 {% set peer_ip = network|ipaddr(2) if is_left else network|ipaddr(1) %}
-{% set asn = base_asn|int + id|int %}
 {% set peer_asn = base_asn|int + hostvars[peer]['id']|int %}
-{% set rtr_id_base = "172.16.16."~id~"/32" %}
-{% set rtr_id = rtr_id_base|ipaddr('address') %}
 
-interface {{ name }}
- ip address {{ ip|ipaddr('address') }} 255.255.255.0
- no shut
-!
-router bgp {{ asn }}
- bgp router-id {{ rtr_id }}
- neighbor {{ peer_ip|ipaddr('address') }} remote-as {{ peer_asn }}
- !
- address-family ipv4
-  neighbor {{ peer_ip|ipaddr('address') }} activate
- exit-address-family
+
+      "{{ peer_ip|ipaddr('address') }}":
+        remote_as: "{{ peer_asn }}"
+        interface: "{{name}}"
 {%- endmacro %}
+{% set rtr_id_base = "172.16.16."~id~"/32" %}
+{% set rtr_id = rtr_id_base|ipaddr %}
+{% set asn = base_asn|int + id|int %}
+---
 
+nodes:
+  {{ inventory_hostname }}:
+    router_id: "{{ rtr_id }}"
+    asn: "{{ asn }}"
+    neighbors:
 {% for link in fabric %}
 {% set right_port = 'eth0/1' if hostvars[link.left]['id'] == "1" else 'eth0/2' %}
 {% if inventory_hostname == link.left %}

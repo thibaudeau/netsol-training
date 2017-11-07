@@ -1,0 +1,38 @@
+
+
+---
+- ping:
+    _name: ping_hubs
+    _kwargs:
+      destination: 10.255.2.1
+      source: 192.168.111.193
+    success:
+      packet_loss: 0
+    _mode: strict
+
+- ping:
+    _name: ping_hubs
+    _kwargs:
+      destination: 10.255.1.1
+      source: 192.168.111.193
+    success:
+      packet_loss: 0
+    _mode: strict
+
+- ping:
+    _name: ping_hubs
+    _kwargs:
+      destination: 10.255.0.1
+      source: 192.168.111.193
+    success:
+      packet_loss: 0
+    _mode: strict
+
+
+- get_interfaces_ip:
+    Ethernet0/3.12:
+      ipv4:
+        192.168.111.193:
+          prefix_length: 26
+
+

@@ -1,0 +1,57 @@
+{% macro conf_branch() -%}
+{% set network_base = "192.168.1"~id~".0/24" %}
+{% set base_lan = network_base|ipsubnet(25,1) %}
+{% set voice_lan = base_lan|ipsubnet(26,1) %}
+{% set voip_acl = "48" %}
+interface eth0/3
+ no shutdown
+ip access-list extended voip_acl
+{% for srv_desc, srv_subnet in voip_srv_subnets.iteritems() %}
+  {{ (loop.index+1) * 10 }} permit ip {{voice_lan|ipaddr('network')}} {{voice_lan|ipaddr('hostmask')}} {{srv_subnet|ipaddr('network')}} {{srv_subnet|ipaddr('hostmask')}}
+{%endfor%}
+
+{% set voice_id = id|int + "1"|int %}
+interface eth0/3.{{voice_id}}
+ description Voice LAN
+ encapsulation dot1Q {{voice_id}}
+ ip address {{ voice_lan|ipaddr(1)|ipaddr('address') }} {{ voice_lan|ipaddr('netmask') }}
+ ip helper-address {{voip_srv_subnets.cm|ipaddr(1)|ipaddr('address')}}
+ ip access-group voip_acl in
+ ip ospf 1 area 1
+{%- endmacro %}
+
+{% macro conf_hub()  -%}
+interface eth1/0
+ no shutdown
+{% for srv_desc, subnet in voip_srv_subnets.iteritems() %}
+{% set ip = subnet|ipaddr(2)|ipaddr('address') if id == "1" else subnet|ipaddr(3)|ipaddr('address') %}
+{% set voip_acl = 149 + loop.index %}
+ip access-list extended {{voip_acl}}
+{% for branches in branch_ids %}
+{% set network_base = "192.168.1"~branches~".0/24" %}
+{% set base_lan = network_base|ipsubnet(25,1) %}
+{% set voice_lan = base_lan|ipsubnet(26,0) %}
+  {{(loop.index + 1) *10 }} permit ip {{subnet|ipaddr('network')}} {{subnet|ipaddr('hostmask')}} {{voice_lan|ipaddr('network')}} {{voice_lan|ipaddr('hostmask')}}
+{%endfor%}
+interface eth1/0.{{loop.index * 10 }}
+ description {{ srv_desc }} Server Subnet
+ encapsulation dot1Q {{loop.index * 10 }}
+ ip address {{ ip }} {{ subnet|ipaddr('netmask') }}
+ standby {{loop.index}} ip {{subnet|ipaddr(1)|ipaddr('address')}}
+ {% if id == "1" %}standby {{ loop.index }} priority 200
+ standby {{ loop.index }} preempt
+ {% else %}standby {{ loop.index }} priority 100
+ {%endif%}
+ ip ospf 1 area 1
+ ip access-group {{voip_acl}} in
+
+ router ospf 1
+  passive-interface eth1/0.{{loop.index * 10 }}
+{%endfor%}
+{%- endmacro %}
+
+{% if node_type == 'hub' %}
+{{ conf_hub() }}
+{% elif node_type == 'branch' %}
+{{ conf_branch() }}
+{% endif %}

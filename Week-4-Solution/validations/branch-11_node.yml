@@ -1,0 +1,20 @@
+###
+#  Model transformation to validate fabric
+###
+---
+
+nodes:
+  branch-11:
+    router_id: "172.16.16.11/32"
+    asn: "65111"
+    neighbors:
+
+
+      "169.254.11.1":
+        remote_as: "65101"
+        interface: "eth0/1"
+
+
+      "169.254.21.1":
+        remote_as: "65102"
+        interface: "eth0/2"

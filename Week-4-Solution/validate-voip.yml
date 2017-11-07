@@ -1,0 +1,33 @@
+---
+- hosts: all
+  name: Create and read node data model
+  vars:
+    validations_dir: "validations"
+  tasks:
+  - name: Get my node ID
+    set_fact:
+      id: "{{ inventory_hostname.split('-')[1] }}"
+
+  - name: Get node type
+    set_fact:
+      node_type: "{{ inventory_hostname.split('-')[0] }}"
+
+  - include_vars: "roles/voip/vars/main.yml"
+
+  - name: Create NAPALM Validation input
+    template: src=voip-to-validation.j2 dest={{validations_dir}}/{{inventory_hostname}}_voip.yml
+
+
+- hosts: all
+  name: GET VALIDATION REPORT
+  tasks:
+  - name: Napalm Validate
+    napalm_validate:
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_ssh_pass }}"
+      hostname: "{{ inventory_hostname }}"
+      dev_os: "ios"
+      validation_file: "validations/{{inventory_hostname}}_voip.yml"
+    register: validation_results
+
+  - debug: msg="{{validation_results}}"

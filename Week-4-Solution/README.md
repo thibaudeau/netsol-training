@@ -1,49 +1,125 @@
-# Week 3 Data Model Solution
+# Week 4 Deploy Network Services From a Data Model
 
-I have setup the lab with 5 routers, 2 hubs and 3 spokes. Each spoke is a branch, and each hub is a small Datacenter. I kinda mixed the idea of services and devices in the data model, so it is a bit messy. I am honestly having some trouble coming up with a service that would make it applicable to my current work so it ended up being a "branch" service, which I know is not very sophisticated.
+I have setup the lab with 5 routers, 2 hubs and 3 spokes. Each spoke is a branch, and each hub is a small Datacenter.
 
-My jinja2 was not very good before this exercise and this helped a lot, despite the lack of service abstraction I came up with.
+## Create Initial Device Configurations
+### Base and Function Configurations
 
-## Business Logic (implied data)
+Playbook "create-base-config.yml" uses the "base" role and the function-specific roles (hub and branches) to build the configurations and deploy them. Output of the playbook is in the "compiled" folder
 
-* Loopback ip range: 172.16.16.0/24
-* All point-to-point links are 169.254.254.x/29
-* BGP AS# are derived to be in 65100-65199 range (implies I wouldn't have anymore than 100 sites)
-* I set it up so that all branch eth0/1 are connected to Hub-1 and eth0/2 to hub-2 so there is no interface name per se in the data model, only hub interfaces (left.)
+Base role:
 
-## host_vars:
-The following variables are configured in the host_vars
+        base
+        ├── tasks
+        │   └── main.yml
+        └── templates
+            └── ios
+                └── base.j2
+Data model uses the common group_vars  and business logic from previous weeks exercise to build the config.
 
-hostname:
-os: OS to install with Napalm
+Branch and Hub roles follow the same pattern:
 
-Hub host_vars also have "server subnets" that are just loopbacks in this case that provide some more routes. (I probably should move those to a service but I ran out of time)
+        branch
+        ├── tasks
+        │   └── main.yml
+        └── templates
+            └── ios
+                └── branch.j2
 
-## group_vars
+Most of the configuration here is derived by business logic.
 
-### all.yml
+### Fabric Configurations
 
-* SNMP Configurations
-* NTP Configurations
-* DNS
+Fabric configurations is done by the "create-fabric-config.yml". I use the fabric role to depoy the fabric. Output is the fabric.conf configuration file in the "compiled" folder.
 
-## roles:
+Fabric role looks like this:
 
-### fabric
-I initially had the fabric.yml in a vars folder in the fabric role, but I moved it to the root folder of the project for visibility.
+        fabric
+        ├── tasks
+        │   └── main.yml
+        ├── templates
+        │   └── ios
+        │       └── fabric.j2
+        └── vars
+            └── main.yml
 
-roles/fabric/templates/ios/fabric.j2 has my template for the fabric. It is a bit of a combination of what David Barroso had in the Abstract Everything and what Dinesh Dutt had in the DC fabric. I tried to make the data model as simple as possible and to derive everything from the host IDs.
+Data model is in the "vars" subfolder.
 
-### branch
-Branch-specific configurations: LAN, VOIP , ATMs, etc..
+## Validate Infrastructure Configurations
 
-### hub
-Hub-specific configurations: OSPF, Server VLANs, etc...
+Validation is done via the validate-fabric.yml playbook. Which also import the includes/validate.yml tasks.
 
-### base
+I do a data model transformation from the roles/fabric/vars/main.yml data model in order to have something a little more useful during the validation. The Jinja2 template for the transformation is in the templates folder. I output the new data model to the validations folder for each of the nodes in the network.
 
-Base configuration, using what is in the all.yml group_vars file. I managed to find an easy way to do wildcard masks in there and I am happy about it (I think you might have covered that at some point but I couldn't find it.)
+        .
+        ├── includes
+        │   └── validate.yml
+        ├── roles
+        │   ├── fabric
+        │   │   └── vars
+        │   │       └── main.yml
+        ├── templates
+        │   └── fabric-to-nodes.j2
+        ├── validate-fabric.yml
+        └── validations
+            ├── branch-11_node.yml
+            ├── branch-12_node.yml
+            ├── branch-13_node.yml
+            ├── hub-1_node.yml
+            └── hub-2_node.yml
 
-## Results
 
-I generate the configs with the create-config.yml playbook and they are stored into the compiled folder.
+I check for BGP neighbors, that the bgp neighbor is up, and that the ASN of the peer matches the model.
+
+## Deploy VoIP Services
+
+In this part I deploy a VOIP "VLAN" on each of the branch routers as well as three server VLANs on the Hubs, with HSRP and routing.
+
+I have voip role much like the other parts of the assignment. Vars for the role are stored in the role/voip/vars folder and are limited. I derived much of the IP configurations from node IDs once again.
+
+      roles
+      ├── remove_voip
+      │   ├── tasks
+      │   │   └── main.yml
+      │   ├── templates
+      │   │   └── ios
+      │   │       └── voip.j2
+      │   └── vars
+      │       └── main.yml
+      └── voip
+          ├── tasks
+          │   └── main.yml
+          ├── templates
+          │   └── ios
+          │       └── voip.j2
+          └── vars
+              └── main.yml
+
+I started only with the voip role, and subsequently added the remove_voip role to enable removal of the service. Passing the variable state=disabled at run time removes the service from all or a limited amount of the nodes depending on the scope of the playbook. The playbook to deploy this service is _deploy-voip.yml_. Config snippets generated are in the _compiled_ folder both for the removal and deployment
+
+### Validation of the VoIP service
+
+As with the validation of the infrastructure, I do a model transformation to generate the validation. I have template called _voip-to-validation.j2_ that generates a yaml file in the format required by the napalm_validate ansible module. The folder validations has the generated yaml files. I check that interfaces deployed are as per model and ping hubs and branches accordingly.
+
+      templates
+      └── voip-to-validation.j2
+      validations
+      ├── branch-11_voip.yml
+      ├── branch-12_voip.yml
+      ├── branch-13_voip.yml
+      ├── hub-1_voip.yml
+      └── hub-2_voip.yml
+      validate-voip.yml
+
+The playbook to run the validations is _validate-voip.yml_
+
+
+## Remainder of the Assignment
+
+I am still working on the remainder of the assignment. Namely:
+
+3. Check device state before configuring the services and reject the change if it would overwrite an existing service. For example, reject adding a device into a VRF if it already belongs to another VRF (another customer).
+
+4. Report extraneous services – list all target services (example: all VRFs) configured on a device, compare them to the expected list of configured services, and report any discrepancies.
+
+5. Automatic cleanup – automatically remove all unexpected services found on the network devices.

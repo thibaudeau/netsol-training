@@ -4,13 +4,28 @@
   when: wait_flag is defined
 
 - name: Collect BGP neighbors
-  ios_command:
-    commands:
-    - "show bgp neighbor | include ^[1-9]"
-  register: bgp_neighbors
+  napalm_get_facts:
+   hostname: "{{ inventory_hostname }}"
+   username: "{{ ansible_user }}"
+   dev_os: "{{ os }}"
+   password: "{{ ansible_ssh_pass }}"
+   filter: "bgp_neighbors"
+  register: "bgp_neighbors"
 
 - name: Verify BGP peers
   assert:
-    that: "'{{ item.key }}' in bgp_neighbors.stdout[0]"
-    msg:  "BGP session on interface {{item.key}} is missing"
-with_dict: "{{ nodes[inventory_hostname].links }}"
+    that: "'{{ item.key }}' in bgp_neighbors.ansible_facts.napalm_bgp_neighbors.global.peers"
+    msg:  "BGP peer {{item.key}} is missing"
+  with_dict: "{{ nodes[inventory_hostname].neighbors }}"
+
+- name: Verify Peer is up
+  assert:
+    that: bgp_neighbors.ansible_facts.napalm_bgp_neighbors.global.peers['{{item.key}}'].is_up
+    msg:  "BGP peer {{item.key}} is down"
+  with_dict: "{{ nodes[inventory_hostname].neighbors }}"
+
+- name: Verify Peer asn
+  assert:
+    that: "'{{ item.value.remote_as }}' in bgp_neighbors.ansible_facts.napalm_bgp_neighbors.global.peers['{{item.key}}'].remote_as|string"
+    msg:  "BGP peer {{item.key}} has the wrong AS configured: {{item.value.remote_as}}"
+  with_dict: "{{ nodes[inventory_hostname].neighbors }}"

@@ -1,5 +1,5 @@
 ---
-- name: Simple configuration
+- name: VoIP configuration
   hosts: all
   connection: local
   gather_facts: no
@@ -13,12 +13,11 @@
   pre_tasks:
      - name: Set some global facts
        set_fact:
-          host_dir: "{{ conf_dir}}{{ inventory_hostname}}"
+          host_dir: "{{ conf_dir}}/{{ inventory_hostname}}"
        changed_when: False
-
      - name: Make sure there are no remains from a previous run
        file:
-         path: "{{ host_dir }}"
+         path: "{{ host_dir }}/voip.conf"
          state: absent
        changed_when: False
 
@@ -28,12 +27,16 @@
          state: directory
        changed_when: False
 
+     - name: Get node type
+       set_fact:
+         node_type: "{{ inventory_hostname.split('-')[0] }}"
+
      - name: Get my node ID
        set_fact:
          id: "{{ inventory_hostname.split('-')[1] }}"
 
-- name: Branch Configuration
-  hosts: branch
+- name: VoIP Configuration
+  hosts: all
   connection: local
   vars:
       creds:
@@ -41,45 +44,21 @@
         username: "{{ ansible_user }}"
         password: "{{ ansible_ssh_pass }}"
   roles:
-    - base
-    - branch
-
-
-  post_tasks:
-  - name: Assemble all the configuration bits
-    assemble:
-        src: "{{ host_dir }}/"
-        dest: "{{ host_dir }}/assembled.conf"
-    changed_when: False
-
-  - name: Load config_file
-    ios_config:
-      src: "{{ host_dir }}/assembled.conf"
-      provider: "{{creds}}"
-
-#  - import_tasks: includes/validate.yml
-#    when: not ansible_check_mode
-
-- name: Hub Configuration
-  hosts: hub
-  connection: local
-  vars:
-      creds:
-        host: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_ssh_pass }}"
-  roles:
-    - base
-    - hub
+    - voip
+    - remove_voip
 
   post_tasks:
-  - name: Assemble all the configuration bits
-    assemble:
-        src: "{{ host_dir }}/"
-        dest: "{{ host_dir }}/assembled.conf"
-    changed_when: False
-
+  - name: Set state to enable deployment by default
+    set_fact:
+      state: "enabled"
   - name: Load config_file
     ios_config:
-      src: "{{ host_dir }}/assembled.conf"
+      src: "{{ host_dir }}/voip.conf"
       provider: "{{creds}}"
+    when: state == "enabled"
+
+  - name: Remove Voip
+    ios_config:
+      src: "{{ host_dir }}/remove_voip.conf"
+      provider: "{{creds}}"
+    when: state == "disabled"

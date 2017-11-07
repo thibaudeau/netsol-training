@@ -1,0 +1,57 @@
+{% macro validate_branch() -%}
+{% set network_base = "192.168.1"~id~".0/24" %}
+{% set base_lan = network_base|ipsubnet(25,1) %}
+{% set voice_lan = base_lan|ipsubnet(26,1) %}
+{% set voice_id = id|int + "1"|int %}
+{% for srv_desc, srv_subnet in voip_srv_subnets.iteritems() %}
+- ping:
+    _name: ping_hubs
+    _kwargs:
+      destination: {{srv_subnet|ipaddr(1)|ipaddr('address')}}
+      source: {{ voice_lan|ipaddr(1)|ipaddr('address') }}
+    success:
+      packet_loss: 0
+    _mode: strict
+
+{%endfor%}
+
+- get_interfaces_ip:
+    Ethernet0/3.{{voice_id}}:
+      ipv4:
+        {{ voice_lan|ipaddr(1)|ipaddr('address') }}:
+          prefix_length: {{ voice_lan|ipaddr('prefix') }}
+
+{% endmacro%}
+
+{% macro validate_hub()  -%}
+{% for srv_desc, subnet in voip_srv_subnets.iteritems() %}
+{% set ip = subnet|ipaddr(2)|ipaddr('address') if id == "1" else subnet|ipaddr(3)|ipaddr('address') %}
+{% for branches in branch_ids %}
+{% set network_base = "192.168.1"~branches~".0/24" %}
+{% set base_lan = network_base|ipsubnet(25,1) %}
+{% set voice_lan = base_lan|ipsubnet(26,1) %}
+- ping:
+    _name: ping_branch{{branches}}
+    _kwargs:
+      destination: {{voice_lan|ipaddr(1)|ipaddr('address')}}
+      source: {{ip}}
+    success:
+      packet_loss: 0
+    _mode: strict
+
+{%endfor%}
+- get_interfaces_ip:
+    Ethernet1/0.{{loop.index * 10 }}:
+      ipv4:
+        {{ip}}:
+          prefix_length: {{subnet|ipaddr('prefix')}}
+
+{% endfor %}
+{%- endmacro %}
+
+---
+{% if node_type == 'hub' %}
+{{ validate_hub() }}
+{% elif node_type == 'branch' %}
+{{ validate_branch() }}
+{% endif %}
